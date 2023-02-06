@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.metrics import accuracy_score
 
 from views import Views
 
@@ -102,13 +101,14 @@ class Neuron:
 
     def artificial_neuron_network(self, x1, y, layer, learning_rate=0.1):
         global W, b
+        params = []
         x = x1
         for i in range(len(layer)):
+            params.append([])
             entry = x.shape[0]
             n2 = y.shape[0]
             W, b = init_network(entry, layer[i], n2)
             Loss = []
-            print(W)
             if W is not None:
                 for j in range(1000):
                     A = forward(x, W, b)
@@ -116,4 +116,6 @@ class Neuron:
                     W, b = update_network(dW, db, W, b, learning_rate)
                     if j % 10 == 0:
                         Loss.append(log_loss(A[1], y))
+            # params[i].append({"W": W, "b": b})
             x = A[1]
+            # Views.pol_decision_frontier(x1, y, params)

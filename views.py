@@ -37,23 +37,25 @@ class Views:
         fig.show()
 
     @staticmethod
-    def pol_decision_frontier(X, W, b, y):
+    def pol_decision_frontier(X, y, params):
         fig, ax = plt.subplots(figsize=(9, 6))
         ax.scatter(X[0, :], X[1, :], c=y, cmap='summer')
-
-        # X, Y = np.meshgrid(X, y)
-        # ax.plot(np.expand_dims(x1, axis=0), x2, c='blue', lw=3)
-
-        # ax.contour(X, Y, np.expand_dims(x2, axis=1))
 
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
         xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.2),
                              np.arange(y_min, y_max, 0.2))
-        # x1 = np.linspace(x_max - x_min, y_min - y_max, 100)
+        x1 = np.linspace(x_max - x_min, y_min - y_max, 100)
         # x2 = (- W[0] * xx - b[0]) / W[1]
-        x2 = (- W[0] * xx - b[0]) / W[1]
+        # x2 = (- W[0] * xx - b[0]) / W[1]
+        x = []
+        # for layer in range(len(params)):
+        #     x.append([xx])
+        #     for i in range(len(params[layer])):
+        #         print(params[layer][i]["W"][0] * x[layer][0])
+        #         x[layer].append((- params[layer][i]["W"][0] * x[layer][0] - params[layer][i]["b"][0])
+        #                         / params[layer][i]["W"][1])
 
-        cp = plt.contour(xx, yy, x2, cmap=plt.cm.Paired)
+        cp = plt.contour(xx, yy, x[-1], cmap=plt.cm.Paired)
         plt.colorbar(cp)
         plt.show()
