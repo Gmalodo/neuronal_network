@@ -16,4 +16,4 @@ if __name__ == '__main__':
     x, y = make_dataset()
 
     n2 = Neuron()
-    n2.artificial_neuron_network(x, y, [30, 1])
+    n2.artificial_neuron_network(x, y, [32, 32], 1000)

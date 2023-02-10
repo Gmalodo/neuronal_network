@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.metrics import accuracy_score
 
 from views import Views
 
@@ -32,11 +33,10 @@ def update(dW, db, W, b, learning_rate):
 
 
 def update_network(dW, db, W, b, learning_rate):
-    W1 = W[0] - learning_rate * dW[0]
-    b1 = b[0] - learning_rate * db[0]
-    W2 = W[1] - learning_rate * dW[1]
-    b2 = b[1] - learning_rate * db[1]
-    return (W1, W2), (b1, b2)
+    for c in range(len(W)):
+        W[c] = W[c] - learning_rate * dW[c]
+        b[c] = b[c] - learning_rate * db[c]
+    return W, b
 
 
 def predict(X, W, b):
@@ -44,34 +44,39 @@ def predict(X, W, b):
     return A >= 0.5
 
 
-def init_network(entry, layer1, layer2):
-    if layer2 is not None:
-        W1 = np.random.rand(layer1, entry)
-        b1 = np.random.rand(layer1, 1)
-        W2 = np.random.rand(layer2, layer1)
-        b2 = np.random.rand(layer2, 1)
-        return (W1, W2), (b1, b2)
-    return None, None
+def init_network(layers):
+    W = []
+    b = []
+    for c in range(1, len(layers)):
+        W.append(np.random.rand(layers[c], layers[c - 1]))
+        b.append(np.random.rand(layers[c], 1))
+
+    return W, b
 
 
 def forward(X, W, b):
-    Z1 = W[0].dot(X) + b[0]
-    A1 = 1 / (1 + np.exp(-Z1))
-    Z2 = W[1].dot(A1) + b[1]
-    A2 = 1 / (1 + np.exp(-Z2))
-    return A1, A2
+    A = [X]
+    for c in range(len(W)):
+        Z = W[c].dot(A[c]) + b[c]
+        A.append(1 / (1 + np.exp(-Z)))
+    return A
 
 
-def backward(A, X, y, W):
-    dZ2 = A[1] - y
-    dW2 = 1 / y.shape[1] * dZ2.dot(A[0].T)
-    db2 = 1 / y.shape[1] * np.sum(dZ2, axis=1, keepdims=True)
+# TODO: last dW casse les couille, au premier backward et casse le second forward
+def backward(A, y, W):
+    dZ = A[-1] - y
+    dW = []
+    db = []
 
-    dZ1 = np.dot(W.T, dZ2) * A[0] * (1 - A[0])
-    dW1 = 1 / y.shape[1] * dZ1.dot(X.T)
-    db1 = 1 / y.shape[1] * np.sum(dZ1, axis=1, keepdims=True)
-
-    return (dW1, dW2), (db1, db2)
+    for c in reversed(range(len(W) + 1)):
+        # print('(A)' + str(c), A[c].shape)
+        # print("(dZ)" + str(c), dZ.shape)
+        # print("(W)" + str(c), W[c - 1].T.shape)
+        dW.append(1 / y.shape[1] * np.dot(dZ, A[c].T))
+        db.append(1 / y.shape[1] * np.sum(dZ, axis=1, keepdims=True))
+        if c > 1:
+            dZ = np.dot(W[c - 1].T, dZ) * A[c - 1] * (1 - A[c - 1])
+    return dW, db
 
 
 def predict_network(x, W, b):
@@ -81,7 +86,8 @@ def predict_network(x, W, b):
 
 class Neuron:
 
-    def artificial_neuron(self, X, y, learning_rate=0.1, n_iter=100, view=''):
+    @staticmethod
+    def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
         W, b = initialisation(X)
 
         Loss = []
@@ -99,23 +105,32 @@ class Neuron:
         if view == 'sigmoid':
             Views.decision_sigmoid_3D(X, W, b, y)
 
-    def artificial_neuron_network(self, x1, y, layer, learning_rate=0.1):
-        global W, b
-        params = []
-        x = x1
-        for i in range(len(layer)):
-            params.append([])
-            entry = x.shape[0]
-            n2 = y.shape[0]
-            W, b = init_network(entry, layer[i], n2)
-            Loss = []
-            if W is not None:
-                for j in range(1000):
-                    A = forward(x, W, b)
-                    dW, db = backward(A, x, y, W[1])
-                    W, b = update_network(dW, db, W, b, learning_rate)
-                    if j % 10 == 0:
-                        Loss.append(log_loss(A[1], y))
-            # params[i].append({"W": W, "b": b})
-            x = A[1]
-            # Views.pol_decision_frontier(x1, y, params)
+    @staticmethod
+    def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1):
+        Loss = []
+        acc = []
+        layers = hidden_layers
+        layers.insert(0, x.shape[0])
+        layers.append(y.shape[0])
+        W, b = init_network(layers)
+        for i in range(iterations):
+            print("loop" + str(i) + ": --------------------------------------")
+            for j in range(len(W)):
+                print("W" + str(j), W[j].shape)
+
+            A = forward(x, W, b)
+            for j in range(len(A)):
+                print("A" + str(j), A[j].shape)
+
+            dW, db = backward(A, y, W)
+            for j in range(len(dW)):
+                print("dW", dW[j].shape)
+
+            W, b = update_network(dW, db, W, b, learning_rate)
+            if i % 10 == 0:
+                Loss.append(log_loss(A[-1], y))
+                # y_predict = predict_network(x, W, b)
+                # acc.append(accuracy_score(y.flatten(), y_predict.flatten()))
+
+        Views.learning_stats(Loss)
+        # Views.accuracy(acc)

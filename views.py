@@ -37,7 +37,7 @@ class Views:
         fig.show()
 
     @staticmethod
-    def pol_decision_frontier(X, y, params):
+    def pol_decision_frontier(X, y, W, b):
         fig, ax = plt.subplots(figsize=(9, 6))
         ax.scatter(X[0, :], X[1, :], c=y, cmap='summer')
 
@@ -58,4 +58,10 @@ class Views:
 
         cp = plt.contour(xx, yy, x[-1], cmap=plt.cm.Paired)
         plt.colorbar(cp)
+        plt.show()
+
+    @staticmethod
+    def accuracy(accuracy):
+        _, ax = plt.subplots(figsize=(9, 6))
+        ax.plot(accuracy)
         plt.show()
