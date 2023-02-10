@@ -62,26 +62,22 @@ def forward(X, W, b):
     return A
 
 
-# TODO: last dW casse les couille, au premier backward et casse le second forward
 def backward(A, y, W):
     dZ = A[-1] - y
     dW = []
     db = []
 
-    for c in reversed(range(len(W) + 1)):
-        # print('(A)' + str(c), A[c].shape)
-        # print("(dZ)" + str(c), dZ.shape)
-        # print("(W)" + str(c), W[c - 1].T.shape)
+    for c in reversed(range(len(W))):
         dW.append(1 / y.shape[1] * np.dot(dZ, A[c].T))
         db.append(1 / y.shape[1] * np.sum(dZ, axis=1, keepdims=True))
         if c > 1:
-            dZ = np.dot(W[c - 1].T, dZ) * A[c - 1] * (1 - A[c - 1])
-    return dW, db
+            dZ = np.dot(W[c].T, dZ) * A[c - 1] * (1 - A[c - 1])
+    return dW[::-1], db[::-1]
 
 
 def predict_network(x, W, b):
     A = forward(x, W, b)
-    return A[1] >= 0.5
+    return A[-1] >= 0.5
 
 
 class Neuron:
@@ -114,23 +110,14 @@ class Neuron:
         layers.append(y.shape[0])
         W, b = init_network(layers)
         for i in range(iterations):
-            print("loop" + str(i) + ": --------------------------------------")
-            for j in range(len(W)):
-                print("W" + str(j), W[j].shape)
-
             A = forward(x, W, b)
-            for j in range(len(A)):
-                print("A" + str(j), A[j].shape)
-
             dW, db = backward(A, y, W)
-            for j in range(len(dW)):
-                print("dW", dW[j].shape)
-
             W, b = update_network(dW, db, W, b, learning_rate)
             if i % 10 == 0:
                 Loss.append(log_loss(A[-1], y))
-                # y_predict = predict_network(x, W, b)
-                # acc.append(accuracy_score(y.flatten(), y_predict.flatten()))
+                y_predict = predict_network(x, W, b)
+                acc.append(accuracy_score(y.flatten(), y_predict.flatten()))
 
         Views.learning_stats(Loss)
-        # Views.accuracy(acc)
+        Views.accuracy(acc)
+        Views.pol_decision_frontier(x, y, W, b)
