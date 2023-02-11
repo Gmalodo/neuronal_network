@@ -54,8 +54,8 @@ class Views:
 
         X0, X1 = np.meshgrid(x0, x1)
         XX = np.vstack((X0.ravel(), X1.ravel()))
-
-        Z = neuron.predict_network(XX, W, b).reshape((resolution, resolution))
+        print(neuron.predict_softmax(XX, W, b).shape)
+        Z = neuron.predict_softmax(XX, W, b).reshape((resolution, resolution))
 
         ax.pcolormesh(X0, X1, Z, cmap='bwr', alpha=0.3, zorder=-1)
         ax.contour(X0, X1, Z, colors='green')

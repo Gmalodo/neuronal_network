@@ -1,5 +1,4 @@
 import numpy as np
-from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 
 from views import Views
@@ -56,9 +55,11 @@ def init_network(layers):
 
 def forward(X, W, b):
     A = [X]
-    for c in range(len(W)):
+    for c in range(len(W)-1):
         Z = W[c].dot(A[c]) + b[c]
         A.append(1 / (1 + np.exp(-Z)))
+    Z = W[-1].dot(A[-1]) + b[-1]
+    A.append(np.exp(Z) / np.sum(np.exp(Z), axis=0))
     return A
 
 
@@ -79,8 +80,13 @@ def predict_network(x, W, b):
     return A[-1] >= 0.5
 
 
-class Neuron:
+def predict_softmax(x, W, b):
+    A = forward(x, W, b)
+    print(len(A[-1][0]))
+    return np.argmax(A[-1], axis=0)
 
+
+class Neuron:
     @staticmethod
     def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
         W, b = initialisation(X)
@@ -101,22 +107,25 @@ class Neuron:
             Views.decision_sigmoid_3D(X, W, b, y)
 
     @staticmethod
-    def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1):
+    def artificial_neuron_network(x, y, y_original, hidden_layers, iterations, learning_rate=0.1):
         Loss = []
         acc = []
         layers = hidden_layers
         layers.insert(0, x.shape[0])
         layers.append(y.shape[0])
         W, b = init_network(layers)
+        for i in range(len(W)):
+            print("W"+str(i), W[i].shape)
         for i in tqdm(range(iterations)):
             A = forward(x, W, b)
+            # for j in range(len(A)):
+            #     print("A" + str(j), A[j].shape)
             dW, db = backward(A, y, W)
             W, b = update_network(dW, db, W, b, learning_rate)
             if i % 10 == 0:
                 Loss.append(log_loss(A[-1], y))
-                y_predict = predict_network(x, W, b)
-                acc.append(accuracy_score(y.flatten(), y_predict.flatten()))
+                # y_predict = predict_softmax(x, W, b)
+                # acc.append(accuracy_score(y.flatten(), y_predict.flatten()))
 
         Views.learning_stats(Loss)
-        Views.accuracy(acc)
-        Views.pol_decision_frontier(x, y, W, b)
+        Views.pol_decision_frontier(x, y_original, W, b)
