@@ -1,6 +1,10 @@
+from cmath import sqrt
+
 import numpy as np
 from matplotlib import pyplot as plt
 import plotly.graph_objects as go
+
+import neuron
 
 
 class Views:
@@ -41,23 +45,20 @@ class Views:
         fig, ax = plt.subplots(figsize=(9, 6))
         ax.scatter(X[0, :], X[1, :], c=y, cmap='summer')
 
-        x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
-        y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
-        xx, yy = np.meshgrid(np.arange(x_min, x_max, 0.2),
-                             np.arange(y_min, y_max, 0.2))
-        x1 = np.linspace(x_max - x_min, y_min - y_max, 100)
-        # x2 = (- W[0] * xx - b[0]) / W[1]
-        # x2 = (- W[0] * xx - b[0]) / W[1]
-        x = []
-        # for layer in range(len(params)):
-        #     x.append([xx])
-        #     for i in range(len(params[layer])):
-        #         print(params[layer][i]["W"][0] * x[layer][0])
-        #         x[layer].append((- params[layer][i]["W"][0] * x[layer][0] - params[layer][i]["b"][0])
-        #                         / params[layer][i]["W"][1])
+        x0_lim = ax.get_xlim()
+        x1_lim = ax.get_ylim()
 
-        cp = plt.contour(xx, yy, x[-1], cmap=plt.cm.Paired)
-        plt.colorbar(cp)
+        resolution = 100
+        x0 = np.linspace(x0_lim[0], x0_lim[1], resolution)
+        x1 = np.linspace(x1_lim[0], x1_lim[1], resolution)
+
+        X0, X1 = np.meshgrid(x0, x1)
+        XX = np.vstack((X0.ravel(), X1.ravel()))
+
+        Z = neuron.predict_network(XX, W, b).reshape((resolution, resolution))
+
+        ax.pcolormesh(X0, X1, Z, cmap='bwr', alpha=0.3, zorder=-1)
+        ax.contour(X0, X1, Z, colors='green')
         plt.show()
 
     @staticmethod
