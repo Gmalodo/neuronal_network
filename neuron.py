@@ -1,5 +1,6 @@
 import numpy as np
 from sklearn.metrics import accuracy_score
+from tqdm import tqdm
 
 from views import Views
 
@@ -50,7 +51,6 @@ def init_network(layers):
     for c in range(1, len(layers)):
         W.append(np.random.rand(layers[c], layers[c - 1]))
         b.append(np.random.rand(layers[c], 1))
-
     return W, b
 
 
@@ -66,7 +66,6 @@ def backward(A, y, W):
     dZ = A[-1] - y
     dW = []
     db = []
-
     for c in reversed(range(len(W))):
         dW.append(1 / y.shape[1] * np.dot(dZ, A[c].T))
         db.append(1 / y.shape[1] * np.sum(dZ, axis=1, keepdims=True))
@@ -109,7 +108,7 @@ class Neuron:
         layers.insert(0, x.shape[0])
         layers.append(y.shape[0])
         W, b = init_network(layers)
-        for i in range(iterations):
+        for i in tqdm(range(iterations)):
             A = forward(x, W, b)
             dW, db = backward(A, y, W)
             W, b = update_network(dW, db, W, b, learning_rate)
