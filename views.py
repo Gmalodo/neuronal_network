@@ -1,68 +1,87 @@
-from cmath import sqrt
+from math import sqrt
 
 import numpy as np
 from matplotlib import pyplot as plt
 import plotly.graph_objects as go
+from numpy import argmax
 
 import neuron
 
 
-class Views:
-    @staticmethod
-    def learning_stats(Loss):
-        plt.plot(Loss)
-        plt.show()
+def learning_stats(Loss):
+    plt.plot(Loss)
+    plt.show()
 
-    @staticmethod
-    def decisions_frontier(X, W, b, y):
-        fig, ax = plt.subplots(figsize=(9, 6))
-        ax.scatter(X[:, 0], X[:, 1], c=y, cmap='summer')
 
-        x1 = np.linspace(-1, 4, 100)
-        x2 = (- W[0] * x1 - b) / W[1]
+def decisions_frontier(X, W, b, y):
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.scatter(X[:, 0], X[:, 1], c=y, cmap='summer')
 
-        ax.plot(x1, x2, c='orange', lw=3)
+    x1 = np.linspace(-1, 4, 100)
+    x2 = (- W[0] * x1 - b) / W[1]
 
-    @staticmethod
-    def decision_sigmoid_3D(X, W, b, y):
-        X0 = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
-        X1 = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
-        xx0, xx1 = np.meshgrid(X0, X1)
-        Z = W[0] * xx0 + W[1] * xx1 + b
-        A = 1 / (1 + np.exp(-Z))
+    ax.plot(x1, x2, c='orange', lw=3)
 
-        fig = (go.Figure(data=[go.Surface(z=A, x=xx0, y=xx1, colorscale='YlGn', opacity=0.7, reversescale=True)]))
 
-        fig.add_scatter3d(x=X[:, 0].flatten(), y=X[:, 1].flatten(), z=y.flatten(), mode='markers',
-                          marker=dict(size=5, color=y.flatten(), colorscale='YlGn', opacity=0.9, reversescale=True))
+def decision_sigmoid_3D(X, W, b, y):
+    X0 = np.linspace(X[:, 0].min(), X[:, 0].max(), 100)
+    X1 = np.linspace(X[:, 1].min(), X[:, 1].max(), 100)
+    xx0, xx1 = np.meshgrid(X0, X1)
+    Z = W[0] * xx0 + W[1] * xx1 + b
+    A = 1 / (1 + np.exp(-Z))
 
-        fig.update_layout(template="plotly_dark", margin=dict(l=0, r=0, b=0, t=0))
-        fig.layout.scene.camera.projection.type = "orthographic"
-        fig.show()
+    fig = (go.Figure(data=[go.Surface(z=A, x=xx0, y=xx1, colorscale='YlGn', opacity=0.7, reversescale=True)]))
 
-    @staticmethod
-    def pol_decision_frontier(X, y, W, b):
-        fig, ax = plt.subplots(figsize=(9, 6))
-        ax.scatter(X[0, :], X[1, :], c=y, cmap='summer')
+    fig.add_scatter3d(x=X[:, 0].flatten(), y=X[:, 1].flatten(), z=y.flatten(), mode='markers',
+                      marker=dict(size=5, color=y.flatten(), colorscale='YlGn', opacity=0.9, reversescale=True))
 
-        x0_lim = ax.get_xlim()
-        x1_lim = ax.get_ylim()
+    fig.update_layout(template="plotly_dark", margin=dict(l=0, r=0, b=0, t=0))
+    fig.layout.scene.camera.projection.type = "orthographic"
+    fig.show()
 
-        resolution = 100
-        x0 = np.linspace(x0_lim[0], x0_lim[1], resolution)
-        x1 = np.linspace(x1_lim[0], x1_lim[1], resolution)
 
-        X0, X1 = np.meshgrid(x0, x1)
-        XX = np.vstack((X0.ravel(), X1.ravel()))
-        print(neuron.predict_softmax(XX, W, b).shape)
-        Z = neuron.predict_softmax(XX, W, b).reshape((resolution, resolution))
+def pol_decision_frontier(X, y, W, b):
+    fig, ax = plt.subplots(figsize=(9, 6))
+    ax.scatter(X[0, :], X[1, :], c=y, cmap='summer')
 
-        ax.pcolormesh(X0, X1, Z, cmap='bwr', alpha=0.3, zorder=-1)
-        ax.contour(X0, X1, Z, colors='green')
-        plt.show()
+    x0_lim = ax.get_xlim()
+    x1_lim = ax.get_ylim()
 
-    @staticmethod
-    def accuracy(accuracy):
-        _, ax = plt.subplots(figsize=(9, 6))
-        ax.plot(accuracy)
-        plt.show()
+    resolution = 100
+    x0 = np.linspace(x0_lim[0], x0_lim[1], resolution)
+    x1 = np.linspace(x1_lim[0], x1_lim[1], resolution)
+
+    X0, X1 = np.meshgrid(x0, x1)
+    XX = np.vstack((X0.ravel(), X1.ravel()))
+    Z = neuron.predict_softmax(XX, W, b).reshape((resolution, resolution))
+
+    ax.pcolormesh(X0, X1, Z, cmap='bwr', alpha=0.3, zorder=-1)
+    ax.contour(X0, X1, Z, colors='green')
+    plt.show()
+
+
+def accuracy(accuracy):
+    _, ax = plt.subplots(figsize=(9, 6))
+    ax.plot(accuracy)
+    plt.show()
+
+
+def image(x, y_original, W, b):
+    plt.figure()
+    plt.imshow(x.T[0].reshape(28, 28).T)
+    plt.show()
+
+
+def cost(X, y):
+    x0 = np.linspace(-10, 10, 100)
+    x1 = np.linspace(-10, 10, 100)
+
+    X0, X1 = np.meshgrid(x0, x1)
+    W = np.c_[X0.ravel(), X1.ravel()]
+    W = W / W.max()
+    Z = X.dot(W)
+    A = 1 / (1 + np.exp(-Z))
+
+    L = 1 / len(y) * np.sum(-y * np.log(A) - (1 - y) * np.log(1 - A), axis=0)
+
+    plt.contourf(X0, X1, L)

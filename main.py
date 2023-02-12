@@ -1,10 +1,13 @@
 import gzip
 
 import numpy as np
+from numpy import argmax
 from sklearn.datasets import make_blobs, make_circles
-from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import LabelBinarizer, MinMaxScaler
+from tqdm import tqdm
 
-from neuron import Neuron
+from neuron import predict_softmax, artificial_neuron_network
+from views import image, learning_stats, cost
 
 
 def training_images():
@@ -15,7 +18,7 @@ def training_images():
         column_count = int.from_bytes(f.read(4), 'big')
         image_data = f.read()
         images = np.frombuffer(image_data, dtype=np.uint8).reshape((image_count, row_count, column_count))
-        return images
+        return images / images.max()
 
 
 def training_labels():
@@ -34,13 +37,12 @@ def make_dataset():
 
 
 if __name__ == '__main__':
-    # x, y = make_blobs(n_samples=100, n_features=2, centers=3, random_state=0)
-    # x = x.T
-    # y = LabelBinarizer().fit_transform(y).T
-
-    x = training_images().reshape(784, 60000)
+    training_set = training_images()
+    x = training_set.T.reshape(training_set.shape[2] * training_set.shape[1], training_set.shape[0])
     y = np.expand_dims(training_labels(), axis=0)
-    # y = np.expand_dims(y, axis=0)
-    print(y[0].shape)
-    n2 = Neuron()
-    n2.artificial_neuron_network(x, LabelBinarizer().fit_transform(y[0]).T, y, [32, 32], 100000)
+    W, b, loss = artificial_neuron_network(x.T[:100].T, LabelBinarizer().fit_transform(y[0])[:100].T, [32, 32], 10000)
+    learning_stats(loss)
+    # cost(x.T[:10000].T, LabelBinarizer().fit_transform(y[0])[:10000])
+    image(x, y, W, b)
+    print("predict", y[0][:10])
+    print("result", predict_softmax(x.T[:10].T, W, b))
