@@ -1,4 +1,7 @@
+import matplotlib.pyplot as plt
 import numpy as np
+from numpy import argmax
+from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from views import learning_stats, decisions_frontier, decision_sigmoid_3D
 
@@ -51,8 +54,8 @@ def init_network(layers):
     W = []
     b = []
     for c in range(1, len(layers)):
-        W.append(np.random.rand(layers[c], layers[c - 1]))
-        b.append(np.random.rand(layers[c], 1))
+        W.append(np.random.randn(layers[c], layers[c - 1]))
+        b.append(np.random.randn(layers[c], 1))
     return W, b
 
 
@@ -73,8 +76,7 @@ def backward(A, y, W):
     for c in reversed(range(len(W))):
         dW.append(1 / y.shape[1] * np.dot(dZ, A[c].T))
         db.append(1 / y.shape[1] * np.sum(dZ, axis=1, keepdims=True))
-        if c > 1:
-            dZ = np.dot(W[c].T, dZ) * (1 - A[c - 1])
+        dZ = np.dot(W[c].T, dZ) * (A[c] * (1 - A[c]))
     return dW[::-1], db[::-1]
 
 
@@ -85,7 +87,7 @@ def predict_network(x, W, b):
 
 def predict_softmax(x, W, b):
     A = forward(x, W, b)
-    return np.argmax(A[-1], axis=0)
+    return argmax(A[-1], axis=0)
 
 
 def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
@@ -107,8 +109,10 @@ def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
         decision_sigmoid_3D(X, W, b, y)
 
 
-def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1):
+def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1, y_o=""):
     Loss = []
+    acc = []
+    Wtemp = []
     layers = hidden_layers
     layers.insert(0, x.shape[0])
     layers.append(y.shape[0])
@@ -118,6 +122,11 @@ def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1
         A = forward(x, W, b)
         dW, db = backward(A, y, W)
         W, b = update_network(dW, db, W, b, learning_rate)
+        Wtemp.append(W[-1].max())
         if i % 10 == 0:
             Loss.append(log_loss_network(A, y))
-    return W, b, Loss
+            acc.append(accuracy_score(y_o, predict_softmax(x, W, b)))
+    plt.figure()
+    plt.plot(Wtemp)
+    plt.show()
+    return W, b, Loss, acc
