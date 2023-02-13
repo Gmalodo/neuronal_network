@@ -1,14 +1,10 @@
 import gzip
-from random import random, randint
-
+import matplotlib.pyplot as plt
 import numpy as np
-from numpy import argmax
-from sklearn.datasets import make_blobs, make_circles, load_digits
-from sklearn.preprocessing import LabelBinarizer, MinMaxScaler
-from tqdm import tqdm
-
+from sklearn.datasets import make_circles, load_digits
+from sklearn.preprocessing import MinMaxScaler, LabelBinarizer
 from neuron import predict_softmax, artificial_neuron_network
-from views import image, learning_stats, accuracy
+from views import learning_stats, accuracy
 
 
 def training_images():
@@ -30,6 +26,7 @@ def training_labels():
         labels = np.frombuffer(label_data, dtype=np.uint8)
         return labels
 
+
 def make_dataset():
     X, y = make_circles(n_samples=100, noise=0.1, factor=0.3, random_state=0)
     X = X.T
@@ -43,12 +40,19 @@ if __name__ == '__main__':
     # x = training_set.T.reshape(training_set.shape[2] * training_set.shape[1], training_set.shape[0])
     # y = np.expand_dims(training_labels, axis=0)
     training_set = load_digits()
-    x = MinMaxScaler().fit_transform(training_set.data)
-    y = LabelBinarizer().fit_transform(training_set.target)
-    W, b, loss, acc = artificial_neuron_network(x.T, y.T, [32, 32], 10000, y_o=training_set.target)
+    x = training_set.data
+    y = np.expand_dims(training_set.target, axis=0) + 1 / 10
+    # y = np.expand_dims(training_set.target, axis=0) + 1 / 10
+    W, b, loss, acc = artificial_neuron_network(y, x.T, [64, 64, 64, 128], 10000, y_o=training_set.target.T)
     learning_stats(loss)
-    # cost(x.T[:10000].T, LabelBinarizer().fit_transform(y[0])[:10000])
-    # image(x, y, W, b)
     accuracy(acc)
-    print(training_set.target[:10])
-    print("result", predict_softmax(x.T, W, b)[:10])
+    # print((predict_softmax(1, W, b).T[0] * 256).T.shape)
+    plt.figure()
+    plt.imshow((predict_softmax(y.T[1], W, b).T[0] * 256).T.reshape(8, 8))
+    # fig, axs = plt.subplots(16, 16)
+    # k = 0
+    # for i in range(len(axs)):
+    #     for j in range(len(axs[i])):
+    #         axs[i][j].imshow((predict_softmax(y[0], W, b).T[k] * 256).reshape(8, 8))
+    #         k = k + 1
+    plt.show()

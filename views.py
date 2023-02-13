@@ -1,10 +1,6 @@
-from math import sqrt
-
 import numpy as np
 from matplotlib import pyplot as plt
 import plotly.graph_objects as go
-from numpy import argmax
-
 import neuron
 
 

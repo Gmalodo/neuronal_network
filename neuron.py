@@ -1,6 +1,5 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy import argmax
 from sklearn.metrics import accuracy_score
 from tqdm import tqdm
 from views import learning_stats, decisions_frontier, decision_sigmoid_3D
@@ -65,12 +64,15 @@ def forward(X, W, b):
         Z = W[c].dot(A[c]) + b[c]
         A.append(1 / (1 + np.exp(-Z)))
     Z = W[-1].dot(A[-1]) + b[-1]
+    # # # normalisation de Z
+    # Z = Z / Z.max()
     A.append(np.exp(Z) / np.sum(np.exp(Z), axis=0))
     return A
 
 
 def backward(A, y, W):
     dZ = A[-1] - y
+    print(dZ.max())
     dW = []
     db = []
     for c in reversed(range(len(W))):
@@ -87,7 +89,8 @@ def predict_network(x, W, b):
 
 def predict_softmax(x, W, b):
     A = forward(x, W, b)
-    return argmax(A[-1], axis=0)
+    return A[-1]
+    # return np.argmax(A[-1], axis=1)
 
 
 def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
@@ -109,7 +112,7 @@ def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
         decision_sigmoid_3D(X, W, b, y)
 
 
-def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1, y_o=""):
+def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.01, y_o=""):
     Loss = []
     acc = []
     Wtemp = []
@@ -121,11 +124,12 @@ def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1
     for i in tqdm(range(iterations)):
         A = forward(x, W, b)
         dW, db = backward(A, y, W)
+        # print(dW[1].max())
         W, b = update_network(dW, db, W, b, learning_rate)
         Wtemp.append(W[-1].max())
         if i % 10 == 0:
             Loss.append(log_loss_network(A, y))
-            acc.append(accuracy_score(y_o, predict_softmax(x, W, b)))
+            # acc.append(accuracy_score(y_o, predict_softmax(x, W, b)))
     plt.figure()
     plt.plot(Wtemp)
     plt.show()
