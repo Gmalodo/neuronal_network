@@ -62,17 +62,18 @@ def forward(X, W, b):
     A = [X]
     for c in range(len(W) - 1):
         Z = W[c].dot(A[c]) + b[c]
+        Z = Z / Z.max()
         A.append(1 / (1 + np.exp(-Z)))
     Z = W[-1].dot(A[-1]) + b[-1]
     # # # normalisation de Z
-    # Z = Z / Z.max()
+    Z = Z / Z.max()
     A.append(np.exp(Z) / np.sum(np.exp(Z), axis=0))
     return A
 
 
 def backward(A, y, W):
     dZ = A[-1] - y
-    print(dZ.max())
+    # print(dZ.max())
     dW = []
     db = []
     for c in reversed(range(len(W))):
@@ -89,8 +90,8 @@ def predict_network(x, W, b):
 
 def predict_softmax(x, W, b):
     A = forward(x, W, b)
-    return A[-1]
-    # return np.argmax(A[-1], axis=1)
+    # return A[-1]
+    return np.argmax(A[-1], axis=1)
 
 
 def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
@@ -112,7 +113,7 @@ def artificial_neuron(X, y, learning_rate=0.1, n_iter=100, view=''):
         decision_sigmoid_3D(X, W, b, y)
 
 
-def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.01, y_o=""):
+def artificial_neuron_network(x, y, hidden_layers, iterations, learning_rate=0.1, y_o=""):
     Loss = []
     acc = []
     Wtemp = []

@@ -35,20 +35,21 @@ def make_dataset():
 
 
 if __name__ == '__main__':
-    # training_set = training_images()
-    # training_labels = training_labels()
-    # x = training_set.T.reshape(training_set.shape[2] * training_set.shape[1], training_set.shape[0])
-    # y = np.expand_dims(training_labels, axis=0)
-    training_set = load_digits()
-    x = training_set.data
-    y = np.expand_dims(training_set.target, axis=0) + 1 / 10
+    training_set = training_images()
+    training_labels = training_labels()
+    x = training_set.T.reshape(training_set.shape[2] * training_set.shape[1], training_set.shape[0])
+    y = LabelBinarizer().fit_transform(training_labels)
+    print(y)
+    # training_set = load_digits()
+    # x = training_set.data
     # y = np.expand_dims(training_set.target, axis=0) + 1 / 10
-    W, b, loss, acc = artificial_neuron_network(y, x.T, [64, 64, 64, 128], 10000, y_o=training_set.target.T)
+    # y = np.expand_dims(training_set.target, axis=0) + 1 / 10
+    W, b, loss, acc = artificial_neuron_network(x, y.T, [128, 128, 128, 128], 100, y_o=training_set.T)
     learning_stats(loss)
     accuracy(acc)
     # print((predict_softmax(1, W, b).T[0] * 256).T.shape)
     plt.figure()
-    plt.imshow((predict_softmax(y.T[1], W, b).T[0] * 256).T.reshape(8, 8))
+    plt.imshow((predict_softmax(y[1], W, b).T[0] * 256).T.reshape(8, 8))
     # fig, axs = plt.subplots(16, 16)
     # k = 0
     # for i in range(len(axs)):
